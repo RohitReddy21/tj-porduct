@@ -253,10 +253,10 @@ export default function DemoPage() {
                 ) : null}
               </div>
 
-              <p className={`notice${status.type ? ` notice-${status.type}` : ''}`}>
+              {/* <p className={`notice${status.type ? ` notice-${status.type}` : ''}`}>
                 {status.message ||
                   'Best practice: connect this page to Microsoft Bookings using VITE_MICROSOFT_BOOKINGS_URL so visitors can submit details here and then pick a real slot in Microsoft.'}
-              </p>
+              </p> */}
             </form>
           </div>
         </div>
