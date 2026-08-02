@@ -17,17 +17,21 @@ const initialForm = {
   jobTitle: '',
   industry: '',
   companySize: '',
+  preferredDate: '',
+  preferredTime: '',
   problem: '',
 };
 
 export default function DemoPage() {
   const [formData, setFormData] = useState(initialForm);
   const [status, setStatus] = useState({ type: '', message: '' });
+  const [showBookingCalendar, setShowBookingCalendar] = useState(false);
 
   const microsoftBookingsUrl = useMemo(
     () => import.meta.env.VITE_MICROSOFT_BOOKINGS_URL?.trim() || '',
     [],
   );
+  const minDate = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   useEffect(() => {
     document.title = 'Book a Demo | AFSv5';
@@ -51,11 +55,18 @@ export default function DemoPage() {
     }
 
     sessionStorage.setItem('afsv5DemoLead', JSON.stringify(formData));
+    setShowBookingCalendar(true);
     setStatus({
       type: 'success',
-      message: 'Thanks. Redirecting you to Microsoft scheduling now.',
+      message:
+        'Thanks. Your details are saved for this session. Now choose your meeting date and time in the Microsoft booking calendar below.',
     });
-    window.location.assign(microsoftBookingsUrl);
+    window.requestAnimationFrame(() => {
+      document.getElementById('booking-calendar')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
   };
 
   return (
@@ -109,8 +120,8 @@ export default function DemoPage() {
           <div className="dashboard">
             <h2 style={{ fontSize: 32 }}>Request your demo</h2>
             <p className="copy demo-copy">
-              Share your details and continue to our Microsoft scheduling page to choose
-              the best meeting time.
+              Share your details, tell us your preferred date, and then choose the final
+              meeting slot in the Microsoft booking calendar.
             </p>
 
             <form className="form" onSubmit={handleSubmit}>
@@ -150,6 +161,41 @@ export default function DemoPage() {
                   value={formData.jobTitle}
                   onChange={handleChange}
                 />
+              </div>
+
+              <div className="form-grid">
+                <div>
+                  <label className="form-label" htmlFor="preferredDate">
+                    Preferred date
+                  </label>
+                  <input
+                    id="preferredDate"
+                    className="input"
+                    name="preferredDate"
+                    type="date"
+                    min={minDate}
+                    value={formData.preferredDate}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label" htmlFor="preferredTime">
+                    Preferred time
+                  </label>
+                  <select
+                    id="preferredTime"
+                    className="input"
+                    name="preferredTime"
+                    value={formData.preferredTime}
+                    onChange={handleChange}
+                  >
+                    <option value="">Select time</option>
+                    <option value="Morning">Morning</option>
+                    <option value="Afternoon">Afternoon</option>
+                    <option value="Evening">Evening</option>
+                  </select>
+                </div>
               </div>
 
               <div className="form-grid">
@@ -193,7 +239,7 @@ export default function DemoPage() {
 
               <div className="form-actions">
                 <button className="btn btn-primary" type="submit">
-                  Continue to Microsoft Scheduling
+                  Save Details and Show Calendar
                 </button>
                 {microsoftBookingsUrl ? (
                   <a
@@ -209,12 +255,54 @@ export default function DemoPage() {
 
               <p className={`notice${status.type ? ` notice-${status.type}` : ''}`}>
                 {status.message ||
-                  'Best practice: connect this page to Microsoft Bookings using VITE_MICROSOFT_BOOKINGS_URL so users can submit details and pick a meeting slot in Microsoft.'}
+                  'Best practice: connect this page to Microsoft Bookings using VITE_MICROSOFT_BOOKINGS_URL so visitors can submit details here and then pick a real slot in Microsoft.'}
               </p>
             </form>
           </div>
         </div>
       </section>
+
+      {microsoftBookingsUrl ? (
+        <section className="section alt" id="booking-calendar">
+          <div className="container">
+            <div className="center" style={{ marginBottom: 28 }}>
+              <span className="eyebrow">Step 2</span>
+              <h2>Choose your booking date and time</h2>
+              <p className="copy">
+                Use the Microsoft Bookings calendar below to confirm the final appointment.
+                If the calendar does not load in your browser, use the direct booking link.
+              </p>
+            </div>
+
+            <div className="booking-shell">
+              <iframe
+                className="booking-frame"
+                src={microsoftBookingsUrl}
+                title="Microsoft Bookings calendar"
+                loading="lazy"
+              />
+            </div>
+
+            <div className="form-actions" style={{ justifyContent: 'center', marginTop: 20 }}>
+              <a
+                className="btn btn-primary"
+                href={microsoftBookingsUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open Booking Calendar in New Tab
+              </a>
+            </div>
+
+            {!showBookingCalendar ? (
+              <p className="notice center" style={{ marginTop: 16 }}>
+                Fill the form above first so your team has the booking context before the
+                meeting is scheduled.
+              </p>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

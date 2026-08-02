@@ -568,6 +568,14 @@ h3 {
   gap: 16px;
 }
 
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -610,6 +618,21 @@ h3 {
 
 .notice-error {
   color: #b42318;
+}
+
+.booking-shell {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.booking-frame {
+  width: 100%;
+  min-height: 820px;
+  border: 0;
+  background: #fff;
 }
 
 @media (max-width: 900px) {
@@ -708,6 +731,10 @@ h3 {
 
   .form-actions .btn {
     width: 100%;
+  }
+
+  .booking-frame {
+    min-height: 700px;
   }
 
   .table-wrap {
