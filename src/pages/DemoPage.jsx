@@ -74,7 +74,7 @@ export default function DemoPage() {
       <section className="hero-inner">
         <div className="container">
           <div className="breadcrumb">AFSv5 / Book a Demo</div>
-          <span className="eyebrow" style={{ color: '#a99fff' }}>
+          <span className="eyebrow" style={{ color: '#93c5fd' }}>
             See AFSv5 in action
           </span>
           <h1>Bring your highest-value workflow. We will map the operating model.</h1>
