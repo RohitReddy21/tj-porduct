@@ -12,6 +12,7 @@ import {
   Code,
   Heading2,
   Heading3,
+  Image as ImageIcon,
   Italic,
   Link2,
   Link2Off,
@@ -77,6 +78,24 @@ function ToolbarButton({ onClick, active, disabled, title, children }) {
 
 const Divider = () => <span className="mx-1 h-5 w-px shrink-0 bg-gray-200" />;
 
+/**
+ * Does this URL point at an image? Matches a normal file extension, and also
+ * Supabase storage object URLs, which carry the extension before a query.
+ */
+const IMAGE_URL = /^https?:\/\/\S+\.(png|jpe?g|gif|webp|avif|svg|bmp)(\?\S*)?$/i;
+
+export function isImageUrl(value) {
+  return IMAGE_URL.test(value.trim());
+}
+
+/** Insert an image straight through ProseMirror, no editor instance needed. */
+function insertImageNode(view, src) {
+  const type = view.state.schema.nodes.image;
+  if (!type) return;
+  const node = type.create({ src, alt: '', placement: 'full' });
+  view.dispatch(view.state.tr.replaceSelectionWith(node).scrollIntoView());
+}
+
 /** Placement choices offered when an image is selected. */
 const IMAGE_PLACEMENTS = [
   ['full', 'Full width'],
@@ -126,14 +145,27 @@ export default function RichTextEditor({
         return true;
       },
       handlePaste: (view, event) => {
-        if (!onUploadImage) return false;
+        // An image file on the clipboard — upload it.
         const files = [...(event.clipboardData?.files ?? [])].filter((f) =>
           f.type.startsWith('image/'),
         );
-        if (!files.length) return false;
-        event.preventDefault();
-        onUploadImage(files, view.state.selection.from);
-        return true;
+        if (files.length && onUploadImage) {
+          event.preventDefault();
+          onUploadImage(files, view.state.selection.from);
+          return true;
+        }
+
+        // A bare image URL — show the picture rather than a link. Without this
+        // the Link extension's autolink turns it into blue underlined text.
+        const text = event.clipboardData?.getData('text/plain')?.trim();
+        const html = event.clipboardData?.getData('text/html');
+        if (text && !html && isImageUrl(text)) {
+          event.preventDefault();
+          insertImageNode(view, text);
+          return true;
+        }
+
+        return false;
       },
     },
     onUpdate: ({ editor: instance }) => onChange(instance.getHTML()),
@@ -163,6 +195,13 @@ export default function RichTextEditor({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor, value]);
+
+  const insertImageByUrl = useCallback(() => {
+    if (!editor) return;
+    const url = window.prompt('Image URL')?.trim();
+    if (!url) return;
+    editor.chain().focus().setImage({ src: url, alt: '', placement: 'full' }).run();
+  }, [editor]);
 
   const setLink = useCallback(() => {
     if (!editor) return;
@@ -296,6 +335,9 @@ export default function RichTextEditor({
           onClick={() => editor.chain().focus().unsetLink().run()}
         >
           <Link2Off size={15} />
+        </ToolbarButton>
+        <ToolbarButton title="Insert image from a URL" onClick={insertImageByUrl}>
+          <ImageIcon size={15} />
         </ToolbarButton>
 
         <Divider />

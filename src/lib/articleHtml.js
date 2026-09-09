@@ -66,10 +66,91 @@ export function isHtmlBody(body) {
   return /<(p|h[1-6]|ul|ol|li|figure|img|blockquote|pre|div|span|strong|em|a)\b[^>]*>/i.test(body);
 }
 
+/**
+ * Rescue lists that were flattened into paragraphs.
+ *
+ * Pasting plain text puts every line in its own <p>, so a bullet list arrives
+ * as a run of paragraphs literally beginning "- ". Rendered that way they read
+ * as loose, over-spaced prose. Consecutive runs are folded back into a real
+ * <ul>/<ol> so they get list spacing and markers.
+ */
+const BULLET = /^\s*[-*•]\s+(.*)$/;
+const NUMBERED = /^\s*\d+[.)]\s+(.*)$/;
+
+export function normaliseArticleHtml(html) {
+  if (!html) return html;
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  const flush = (run, kind, anchor) => {
+    if (run.length < 2) return; // a single stray line is probably real prose
+    const list = doc.createElement(kind);
+    run.forEach(({ node, text }) => {
+      const li = doc.createElement('li');
+      // Keep any inline markup, minus the leading marker.
+      const clone = node.cloneNode(true);
+      const first = clone.firstChild;
+      if (first?.nodeType === 3) {
+        first.nodeValue = first.nodeValue.replace(/^\s*(?:[-*•]|\d+[.)])\s+/, '');
+        while (clone.firstChild) li.appendChild(clone.firstChild);
+      } else {
+        li.textContent = text;
+      }
+      list.appendChild(li);
+    });
+    anchor.parentNode.insertBefore(list, anchor);
+    run.forEach(({ node }) => node.remove());
+  };
+
+  // A paragraph that is nothing but an image URL — pasted before the editor
+  // recognised those — should be the picture, not a blue link.
+  const IMAGE_URL = /^https?:\/\/\S+\.(png|jpe?g|gif|webp|avif|svg|bmp)(\?\S*)?$/i;
+  for (const p of [...doc.body.querySelectorAll('p')]) {
+    const text = p.textContent.trim();
+    if (!IMAGE_URL.test(text)) continue;
+    const links = p.querySelectorAll('a');
+    // Only when the paragraph holds nothing else.
+    if (links.length > 1) continue;
+    if (links.length === 1 && links[0].textContent.trim() !== text) continue;
+    const img = doc.createElement('img');
+    img.setAttribute('src', links.length ? links[0].getAttribute('href') || text : text);
+    img.setAttribute('alt', '');
+    img.setAttribute('data-placement', 'full');
+    p.replaceWith(img);
+  }
+
+  // Group the top-level children into consecutive runs of the same marker type,
+  // then convert each run in one pass. Collecting first keeps the DOM stable
+  // while we are still walking it.
+  const runs = [];
+  let current = null;
+
+  for (const node of doc.body.children) {
+    const isP = node.tagName === 'P';
+    const text = isP ? node.textContent : '';
+    const bullet = isP ? BULLET.exec(text) : null;
+    const numbered = isP && !bullet ? NUMBERED.exec(text) : null;
+    const kind = bullet ? 'ul' : numbered ? 'ol' : null;
+
+    if (!kind) {
+      current = null;
+      continue;
+    }
+    if (!current || current.kind !== kind) {
+      current = { kind, items: [] };
+      runs.push(current);
+    }
+    current.items.push({ node, text: (bullet ?? numbered)[1] });
+  }
+
+  for (const { kind, items } of runs) flush(items, kind, items[0].node);
+
+  return doc.body.innerHTML;
+}
+
 export function sanitizeArticleHtml(body) {
   if (!body) return '';
   installHooks();
-  return DOMPurify.sanitize(body, CONFIG);
+  return DOMPurify.sanitize(normaliseArticleHtml(body), CONFIG);
 }
 
 /** Plain text of an article body, for excerpts and reading time. */

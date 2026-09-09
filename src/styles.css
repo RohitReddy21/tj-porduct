@@ -2953,3 +2953,101 @@ main > section:nth-of-type(odd) .input {
 .ProseMirror-dropcursor {
   border-top: 2px solid var(--blue-strong);
 }
+
+/* ============================================================
+   ARTICLE RHYTHM
+   Tightened: 26px between every block read as far too airy,
+   especially for short lines and list items.
+   ============================================================ */
+
+.article-body > * + *,
+.article-html > * + * {
+  margin-top: 18px;
+}
+
+.article-body h2,
+.article-html h2 {
+  margin-top: 40px;
+  margin-bottom: 0;
+}
+
+.article-body h3,
+.article-html h3 {
+  margin-top: 30px;
+  margin-bottom: 0;
+}
+
+/* A heading straight after another heading should not double up. */
+.article-body h2 + h3,
+.article-html h2 + h3 {
+  margin-top: 16px;
+}
+
+.article-body ul,
+.article-body ol,
+.article-html ul,
+.article-html ol {
+  margin-top: 14px;
+}
+
+.article-body li + li,
+.article-html li + li {
+  margin-top: 4px;
+}
+
+.article-body blockquote,
+.article-html blockquote {
+  margin-block: 26px;
+}
+
+.article-figure,
+.article-html img[data-placement="full"],
+.article-html img[data-placement="wide"] {
+  margin-block: 28px;
+}
+
+.article-cover {
+  margin-bottom: 32px;
+}
+
+/* Tailwind's preflight sets `list-style: none` on every ul/ol. Article and
+   editor content needs real markers back. */
+.article-body ul,
+.article-html ul,
+.tiptap-surface ul {
+  padding-left: 26px;
+  list-style: disc outside;
+}
+
+.article-body ol,
+.article-html ol,
+.tiptap-surface ol {
+  padding-left: 26px;
+  list-style: decimal outside;
+}
+
+.article-body ul ul,
+.article-html ul ul,
+.tiptap-surface ul ul {
+  list-style: circle outside;
+}
+
+.article-body li,
+.article-html li,
+.tiptap-surface li {
+  display: list-item;
+  list-style: inherit;
+}
+
+.article-body li::marker,
+.article-html li::marker,
+.tiptap-surface li::marker {
+  color: var(--blue-strong);
+}
+
+/* A paragraph wrapped inside a list item (how TipTap stores them) should not
+   add its own block spacing. */
+.article-html li > p,
+.tiptap-surface li > p {
+  margin: 0;
+}
