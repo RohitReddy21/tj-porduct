@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight, Calendar, Clock } from 'lucide-react';
 import { LINKEDIN_PROFILE_URL } from '../data/blogPosts.js';
-import { listPublishedPosts } from '../lib/posts.js';
+import { displayPostTags, listPublishedPosts } from '../lib/posts.js';
 
 function LinkedinIcon({ size = 18, ...props }) {
   return (
@@ -20,6 +20,7 @@ function formatDate(value) {
 
 function CardInner({ post, index }) {
   const onSite = Boolean(post.slug);
+  const tags = displayPostTags(post.tags);
 
   return (
     <>
@@ -59,9 +60,9 @@ function CardInner({ post, index }) {
           </p>
         ) : null}
 
-        {post.tags?.length ? (
+        {tags.length ? (
           <div className="blog-card-tags">
-            {post.tags.map((tag) => (
+            {tags.map((tag) => (
               <span key={tag}>
                 {tag}
               </span>

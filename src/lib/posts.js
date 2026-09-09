@@ -29,6 +29,15 @@ function fromManualList() {
   }));
 }
 
+export function displayPostTags(tags = []) {
+  return tags.flatMap((tag) => {
+    const value = String(tag).trim();
+    if (!value.includes('#')) return value ? [value] : [];
+    const hashtags = value.match(/#[A-Za-z0-9_-]+/g);
+    return hashtags?.length ? hashtags : [value];
+  });
+}
+
 function normalise(row) {
   return {
     ...row,
@@ -71,10 +80,19 @@ export async function listAllPosts() {
 }
 
 export async function getPostBySlug(slug) {
-  if (!isSupabaseConfigured) return null;
-  const { data, error } = await supabase.from('posts').select('*').eq('slug', slug).maybeSingle();
-  if (error) throw error;
-  return data ? normalise(data) : null;
+  const manualPost = fromManualList().find((post) => slugify(post.title) === slug);
+  if (!isSupabaseConfigured) return manualPost ? { ...manualPost, slug } : null;
+
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (error) {
+    console.error('[posts] falling back to the manual post list:', error.message);
+    return manualPost ? { ...manualPost, slug } : null;
+  }
+  return data ? normalise(data) : manualPost ? { ...manualPost, slug } : null;
 }
 
 export async function createPost(post) {

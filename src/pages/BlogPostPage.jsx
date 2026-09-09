@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock } from 'lucide-react';
-import { getPostBySlug } from '../lib/posts.js';
+import { displayPostTags, getPostBySlug } from '../lib/posts.js';
 import { renderArticleBody } from '../lib/richtext.jsx';
 
 function LinkedinIcon({ size = 18, ...props }) {
@@ -78,40 +78,32 @@ export default function BlogPostPage() {
   }
 
   const { post } = state;
+  const tags = displayPostTags(post.tags);
 
   return (
     <main data-page-root>
-      <section className="hero-inner">
-        <div className="container">
-          <div className="breadcrumb">
+      <section className="hero-inner article-hero">
+        <div className="container article-hero-inner">
+          <div className="breadcrumb article-hero-breadcrumb">
             <Link to="/blog" style={{ color: 'inherit' }}>
               AFSv5 / Blog
             </Link>
           </div>
-          {post.tags?.length ? (
-            <span className="eyebrow" style={{ color: '#93c5fd' }}>
-              {post.tags.join(' · ')}
-            </span>
+          <span className="eyebrow article-hero-kicker">Article / Field note</span>
+          {tags.length ? (
+            <div className="article-hero-tags" aria-label="Article topics">
+              {tags.map((tag) => <span key={tag}>{tag}</span>)}
+            </div>
           ) : null}
           <h1>{post.title}</h1>
           {post.excerpt ? <p className="lead">{post.excerpt}</p> : null}
-          <div
-            style={{
-              marginTop: 28,
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 20,
-              color: '#cbd5e1',
-              fontSize: '0.86rem',
-              fontWeight: 700,
-            }}
-          >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+          <div className="article-hero-meta">
+            <span>
               <Calendar size={15} />
               {formatDate(post.published_at ?? post.created_at)}
             </span>
             {post.reading_time ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+              <span>
                 <Clock size={15} />
                 {post.reading_time}
               </span>
@@ -156,9 +148,9 @@ export default function BlogPostPage() {
               <span className="eyebrow">Article details</span>
               <strong>{post.reading_time || 'Field note'}</strong>
               <span className="muted">Published {formatDate(post.published_at ?? post.created_at)}</span>
-              {post.tags?.length ? (
+              {tags.length ? (
                 <div className="article-aside-tags">
-                  {post.tags.map((tag) => <span key={tag}>{tag}</span>)}
+                  {tags.map((tag) => <span key={tag}>{tag}</span>)}
                 </div>
               ) : null}
               <Link className="article-aside-link" to="/blog">
