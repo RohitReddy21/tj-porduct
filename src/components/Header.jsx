@@ -47,7 +47,7 @@ const socialLinks = [
   { href: 'https://facebook.com', label: 'Facebook', Icon: FacebookIcon },
   { href: 'https://twitter.com', label: 'Twitter', Icon: TwitterIcon },
   {
-    href: 'https://www.linkedin.com/company/techjignyasa-india-private-limited/',
+    href: 'https://www.linkedin.com/company/techjignyasa-india-private-limited/posts/?viewAsMember=true',
     label: 'LinkedIn',
     Icon: LinkedinIcon,
   },

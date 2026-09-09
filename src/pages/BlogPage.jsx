@@ -18,100 +18,58 @@ function formatDate(value) {
   return parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-const cardStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 14,
-  padding: 0,
-  overflow: 'hidden',
-};
-
-function CardInner({ post }) {
+function CardInner({ post, index }) {
   const onSite = Boolean(post.slug);
 
   return (
     <>
       {post.cover_image ? (
         <img
+          className="blog-card-media"
           src={post.cover_image}
           alt=""
           loading="lazy"
-          style={{
-            width: '100%',
-            height: 180,
-            objectFit: 'cover',
-            display: 'block',
-            borderBottom: '1px solid var(--line)',
-          }}
         />
-      ) : null}
+      ) : (
+        <div className="blog-card-media blog-card-media-fallback" aria-hidden="true">
+          <span>AFSv5</span>
+          <strong>{String(index + 1).padStart(2, '0')}</strong>
+        </div>
+      )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: 32, flex: 1 }}>
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: 14,
-            fontSize: '0.82rem',
-            fontWeight: 700,
-            color: 'var(--muted)',
-          }}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <div className="blog-card-content">
+        <div className="blog-card-meta">
+          <span>
             <Calendar size={14} />
             {formatDate(post.published_at)}
           </span>
           {post.reading_time ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span>
               <Clock size={14} />
               {post.reading_time}
             </span>
           ) : null}
         </div>
 
-        <h3 style={{ margin: 0, lineHeight: 1.3 }}>{post.title}</h3>
+        <h3>{post.title}</h3>
 
         {post.excerpt ? (
-          <p className="muted" style={{ margin: 0, lineHeight: 1.65 }}>
+          <p className="muted blog-card-excerpt">
             {post.excerpt}
           </p>
         ) : null}
 
         {post.tags?.length ? (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <div className="blog-card-tags">
             {post.tags.map((tag) => (
-              <span
-                key={tag}
-                style={{
-                  padding: '4px 12px',
-                  borderRadius: 999,
-                  border: '1px solid rgba(37, 99, 235, 0.16)',
-                  background: 'var(--blue-soft-2)',
-                  color: 'var(--blue-strong)',
-                  fontSize: '0.72rem',
-                  fontWeight: 800,
-                  letterSpacing: '0.02em',
-                }}
-              >
+              <span key={tag}>
                 {tag}
               </span>
             ))}
           </div>
         ) : null}
 
-        <span
-          style={{
-            marginTop: 'auto',
-            paddingTop: 6,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            color: 'var(--blue-strong)',
-            fontWeight: 800,
-            fontSize: '0.9rem',
-          }}
-        >
+        <span className="blog-card-link">
           {onSite ? 'Read article' : 'Read on LinkedIn'}
           {onSite ? <ArrowRight size={16} /> : <ArrowUpRight size={16} />}
         </span>
@@ -120,24 +78,23 @@ function CardInner({ post }) {
   );
 }
 
-function PostCard({ post }) {
+function PostCard({ post, index }) {
   // Posts written in /admin open on the site; manual entries link out to LinkedIn.
   if (post.slug) {
     return (
-      <Link className="card" to={`/blog/${post.slug}`} style={cardStyle}>
-        <CardInner post={post} />
+      <Link className={`card blog-card${index === 0 ? ' blog-card-featured' : ''}`} to={`/blog/${post.slug}`}>
+        <CardInner post={post} index={index} />
       </Link>
     );
   }
   return (
     <a
-      className="card"
+      className={`card blog-card${index === 0 ? ' blog-card-featured' : ''}`}
       href={post.linkedin_url}
       target="_blank"
       rel="noreferrer"
-      style={cardStyle}
     >
-      <CardInner post={post} />
+      <CardInner post={post} index={index} />
     </a>
   );
 }
@@ -204,9 +161,9 @@ export default function BlogPage() {
             <>
               <span className="eyebrow">Latest articles</span>
               <h2 style={{ marginBottom: 40 }}>Recent writing</h2>
-              <div className="grid-3">
-                {posts.map((post) => (
-                  <PostCard key={post.id} post={post} />
+              <div className={`grid-3 blog-grid${posts.length === 1 ? ' blog-grid-single' : ''}`}>
+                {posts.map((post, index) => (
+                  <PostCard key={post.id} post={post} index={index} />
                 ))}
               </div>
             </>

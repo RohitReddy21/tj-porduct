@@ -120,8 +120,8 @@ export default function BlogPostPage() {
         </div>
       </section>
 
-      <section className="section">
-        <div className="container">
+      <section className="section article-section">
+        <div className="container article-layout">
           <article className="article-body">
             {post.cover_image ? (
               <figure className="article-cover">
@@ -151,6 +151,22 @@ export default function BlogPostPage() {
               ) : null}
             </div>
           </article>
+          <aside className="article-aside">
+            <div className="article-aside-card">
+              <span className="eyebrow">Article details</span>
+              <strong>{post.reading_time || 'Field note'}</strong>
+              <span className="muted">Published {formatDate(post.published_at ?? post.created_at)}</span>
+              {post.tags?.length ? (
+                <div className="article-aside-tags">
+                  {post.tags.map((tag) => <span key={tag}>{tag}</span>)}
+                </div>
+              ) : null}
+              <Link className="article-aside-link" to="/blog">
+                <ArrowLeft size={15} />
+                Browse all articles
+              </Link>
+            </div>
+          </aside>
         </div>
       </section>
     </main>

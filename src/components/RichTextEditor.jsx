@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
+import { Node, mergeAttributes } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
@@ -51,6 +52,54 @@ const PlacedImage = Image.extend({
         parseHTML: (element) => element.getAttribute('data-placement') || 'full',
         renderHTML: (attributes) => ({ 'data-placement': attributes.placement || 'full' }),
       },
+    };
+  },
+});
+
+/**
+ * Video block. Behaves like the image node — same placements, draggable to
+ * anywhere in the article — and publishes as a native <video controls>.
+ */
+const Video = Node.create({
+  name: 'video',
+  group: 'block',
+  atom: true,
+  draggable: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      src: { default: null },
+      poster: { default: null },
+      placement: {
+        default: 'full',
+        parseHTML: (element) => element.getAttribute('data-placement') || 'full',
+        renderHTML: (attributes) => ({ 'data-placement': attributes.placement || 'full' }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'video[src]' }, { tag: 'video' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'video',
+      mergeAttributes(HTMLAttributes, {
+        controls: 'controls',
+        preload: 'metadata',
+        playsinline: 'true',
+      }),
+    ];
+  },
+
+  addCommands() {
+    return {
+      setVideo:
+        (options) =>
+        ({ commands }) =>
+          commands.insertContent({ type: this.name, attrs: options }),
     };
   },
 });
@@ -123,6 +172,7 @@ export default function RichTextEditor({
         },
       }),
       PlacedImage.configure({ inline: false, allowBase64: false }),
+      Video,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Placeholder.configure({ placeholder: placeholder ?? 'Write your article…' }),
     ],
@@ -171,13 +221,15 @@ export default function RichTextEditor({
     onUpdate: ({ editor: instance }) => onChange(instance.getHTML()),
   });
 
-  // Track the selected image so the placement bar can reflect and change it.
-  const imageState = useEditorState({
+  // Track the selected image or video so the placement bar can change it.
+  const mediaState = useEditorState({
     editor,
-    selector: ({ editor: e }) =>
-      e?.isActive('image')
-        ? { selected: true, placement: e.getAttributes('image').placement || 'full' }
-        : { selected: false, placement: null },
+    selector: ({ editor: e }) => {
+      const kind = e?.isActive('image') ? 'image' : e?.isActive('video') ? 'video' : null;
+      return kind
+        ? { selected: true, kind, placement: e.getAttributes(kind).placement || 'full' }
+        : { selected: false, kind: null, placement: null };
+    },
   });
 
   // Hand the instance up so the image gallery can insert at the cursor.
@@ -362,20 +414,22 @@ export default function RichTextEditor({
         </span>
       </div>
 
-      {/* Appears only while an image is selected. */}
-      {imageState?.selected ? (
+      {/* Appears only while an image or video is selected. */}
+      {mediaState?.selected ? (
         <div className="flex flex-wrap items-center gap-1.5 border-b border-blue-200 bg-blue-50 px-2.5 py-1.5">
           <span className="mr-1 text-[11px] font-bold uppercase tracking-wide text-blue-700">
-            Image
+            {mediaState.kind === 'video' ? 'Video' : 'Image'}
           </span>
           {IMAGE_PLACEMENTS.map(([key, labelText]) => (
             <button
               key={key}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().updateAttributes('image', { placement: key }).run()}
+              onClick={() =>
+                editor.chain().focus().updateAttributes(mediaState.kind, { placement: key }).run()
+              }
               className={`rounded border px-2 py-1 text-[11px] font-bold transition ${
-                imageState.placement === key
+                mediaState.placement === key
                   ? 'border-blue-600 bg-blue-600 text-white'
                   : 'border-blue-200 bg-white text-blue-700 hover:border-blue-600'
               }`}
