@@ -25,12 +25,9 @@ function CardInner({ post, index }) {
   return (
     <>
       {post.cover_image ? (
-        <img
-          className="blog-card-media"
-          src={post.cover_image}
-          alt=""
-          loading="lazy"
-        />
+        <div className="blog-card-media">
+          <img src={post.cover_image} alt="" loading="lazy" />
+        </div>
       ) : (
         <div className="blog-card-media blog-card-media-fallback" aria-hidden="true">
           <span>AFSv5</span>
